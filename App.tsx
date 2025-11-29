@@ -1,12 +1,11 @@
 import React from 'react';
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { getCurrentUser } from './services/api';
 import { Layout } from './components/Common';
 
 // Auth Pages
-import { LandingPage } from './pages/StudentAuth';
-import { DoctorLogin } from './pages/DoctorApp';
-import { AdminLogin, AdminDashboard } from './pages/AdminApp';
+import { UnifiedLogin } from './pages/StudentAuth';
+import { AdminDashboard } from './pages/AdminApp';
 
 // Student Pages
 import { 
@@ -14,7 +13,7 @@ import {
   LecturerReview, VendorReview, 
   CGPACalculator, Settings 
 } from './pages/StudentApp';
-import { AppointmentHistory } from './pages/StudentApp'; // Reusing from previous if available or export it
+import { AppointmentHistory } from './pages/StudentApp';
 
 // Doctor Pages
 import { DoctorDashboard } from './pages/DoctorApp';
@@ -29,16 +28,14 @@ const App = () => {
   return (
     <HashRouter>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LayoutWrapper><LandingPage /></LayoutWrapper>} />
+        {/* Unified Login */}
+        <Route path="/" element={<LayoutWrapper><UnifiedLogin /></LayoutWrapper>} />
         
         {/* Doctor Routes */}
-        <Route path="/doctor/login" element={<DoctorLogin />} />
         <Route path="/doctor/dashboard" element={<LayoutWrapper><DoctorDashboard /></LayoutWrapper>} />
 
         {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<LayoutWrapper title="Admin Panel"><AdminDashboard /></LayoutWrapper>} />
+        <Route path="/admin/dashboard" element={<LayoutWrapper title="Admin Console"><AdminDashboard /></LayoutWrapper>} />
 
         {/* Student Routes */}
         <Route path="/student/dashboard" element={

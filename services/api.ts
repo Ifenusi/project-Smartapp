@@ -58,7 +58,8 @@ export const loginStudent = async (matric: string, password: string): Promise<Us
   await new Promise(r => setTimeout(r, 600)); 
   
   const users = getStorageData<User[]>(STORAGE_KEY_USERS, []);
-  const user = users.find(u => u.matricNumber === matric && u.role === 'student');
+  // Allow login by Matric OR Email
+  const user = users.find(u => (u.matricNumber === matric || u.email === matric) && u.role === 'student');
 
   if (!user) {
     throw new Error('Student not found. Please register first.');
@@ -151,6 +152,21 @@ export const loginAdmin = async (email: string, password: string): Promise<User>
   
   logActivity('Failed Admin Login', `Attempted with email: ${email}`, 'error');
   throw new Error('Invalid Admin Credentials');
+};
+
+export const loginUnified = async (identifier: string, password: string): Promise<User> => {
+  // Check Admin Credentials
+  if (identifier === ADMIN_CREDENTIALS.email) {
+    return loginAdmin(identifier, password);
+  }
+  
+  // Check Doctor Credentials
+  if (identifier === DOCTOR_CREDENTIALS.email) {
+    return loginDoctor(identifier, password);
+  }
+
+  // Fallback to Student Login (Matric or Email handled in loginStudent)
+  return loginStudent(identifier, password);
 };
 
 export const logout = () => {
@@ -337,6 +353,10 @@ export const saveCGPARecord = async (record: Omit<CGPARecord, 'id' | 'createdAt'
 export const getStudentCGPARecords = (studentId: string): CGPARecord[] => {
   const records = getStorageData<CGPARecord[]>(STORAGE_KEY_CGPA, []);
   return records.filter(r => r.studentId === studentId);
+};
+
+export const getAllCGPARecords = (): CGPARecord[] => {
+  return getStorageData<CGPARecord[]>(STORAGE_KEY_CGPA, []);
 };
 
 // --- Admin Services ---

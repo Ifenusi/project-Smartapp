@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginStudent, registerStudent } from '../services/api';
+import { loginUnified, registerStudent } from '../services/api';
 import { Button, Input, Card, Carousel } from '../components/Common';
+import { GraduationCap } from 'lucide-react';
 
-export const LandingPage = () => {
+export const UnifiedLogin = () => {
   const navigate = useNavigate();
   const [isRegistering, setIsRegistering] = useState(false);
-  const [matric, setMatric] = useState('');
-  const [password, setPassword] = useState('');
+  
+  // Login State
+  const [loginId, setLoginId] = useState('');
+  const [loginPass, setLoginPass] = useState('');
   
   // Registration State
   const [regData, setRegData] = useState({
@@ -26,8 +29,11 @@ export const LandingPage = () => {
     setError('');
     setLoading(true);
     try {
-      await loginStudent(matric, password);
-      navigate('/student/dashboard');
+      const user = await loginUnified(loginId, loginPass);
+      // Redirect based on role
+      if (user.role === 'admin') navigate('/admin/dashboard');
+      else if (user.role === 'doctor') navigate('/doctor/dashboard');
+      else navigate('/student/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
@@ -44,6 +50,9 @@ export const LandingPage = () => {
       setIsRegistering(false); // Switch to login after success
       setError('');
       alert('Account created successfully! Please login.');
+      // Auto-fill the matric
+      setLoginId(regData.matric);
+      setLoginPass('');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     } finally {
@@ -56,11 +65,14 @@ export const LandingPage = () => {
       <div className="w-full max-w-lg">
         {/* Branding Title */}
         <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-[#0057FF] mb-4">
+             <GraduationCap size={32} />
+          </div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase">
-            Wellspring Smart App Project
+            Wellspring Smart App
           </h1>
           <p className="text-gray-500 text-sm mt-1">
-            Your Digital Campus Companion
+            Unified Portal for Students & Staff
           </p>
         </div>
 
@@ -74,13 +86,13 @@ export const LandingPage = () => {
               className={`flex-1 pb-3 text-sm font-semibold transition-colors ${!isRegistering ? 'text-[#0057FF] border-b-2 border-[#0057FF]' : 'text-gray-400 hover:text-gray-600'}`}
               onClick={() => setIsRegistering(false)}
             >
-              Login
+              Secure Login
             </button>
             <button 
               className={`flex-1 pb-3 text-sm font-semibold transition-colors ${isRegistering ? 'text-[#0057FF] border-b-2 border-[#0057FF]' : 'text-gray-400 hover:text-gray-600'}`}
               onClick={() => setIsRegistering(true)}
             >
-              Register
+              New Student
             </button>
           </div>
 
@@ -93,18 +105,18 @@ export const LandingPage = () => {
           {!isRegistering ? (
             <form onSubmit={handleLogin} className="animate-fade-in">
               <Input 
-                label="Matric Number" 
-                placeholder="e.g. COSC/62927"
-                value={matric}
-                onChange={e => setMatric(e.target.value)}
+                label="Matric Number or Email" 
+                placeholder="e.g. COSC/62927 or admin@duty"
+                value={loginId}
+                onChange={e => setLoginId(e.target.value)}
                 required
               />
               <Input 
                 label="Password" 
                 type="password"
-                placeholder="Surname (lowercase)"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                value={loginPass}
+                onChange={e => setLoginPass(e.target.value)}
                 required
               />
               <div className="flex items-center justify-between mb-6">
@@ -112,9 +124,10 @@ export const LandingPage = () => {
                   <input type="checkbox" className="rounded text-[#0057FF] focus:ring-[#0057FF]" />
                   Remember me
                 </label>
+                <a href="#" className="text-xs text-[#0057FF] hover:underline">Forgot password?</a>
               </div>
               <Button type="submit" isLoading={loading}>
-                Access Student Portal
+                Access Portal
               </Button>
             </form>
           ) : (
@@ -170,11 +183,7 @@ export const LandingPage = () => {
 
         <div className="mt-8 text-center space-y-2">
           <p className="text-xs text-gray-400">Powered by Wellspring Smart Systems</p>
-          <div className="flex gap-4 justify-center text-xs text-gray-400">
-             <a href="#/doctor/login" className="hover:text-[#0057FF] underline">Doctor Login</a>
-             <span>|</span>
-             <a href="#/admin/login" className="hover:text-[#0057FF] underline">Admin Login</a>
-          </div>
+          <p className="text-[10px] text-gray-400">Version 2.0.1 (Unified Access)</p>
         </div>
       </div>
     </div>

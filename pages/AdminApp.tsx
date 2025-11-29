@@ -1,62 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  loginAdmin, getCurrentUser, 
+  getCurrentUser, 
   getAllStudents, deleteStudent, resetStudentPassword,
-  getLecturers, addLecturer, deleteLecturer,
-  getVendors, addVendor, deleteVendor,
   getReviews, deleteReview, 
-  getAllAppointments, getSystemLogs
+  getAllAppointments, getSystemLogs, getAllCGPARecords
 } from '../services/api';
-import { User, Lecturer, Vendor, Review, Appointment, SystemLog } from '../types';
+import { User, Review, Appointment, SystemLog, CGPARecord } from '../types';
 import { Button, Input, Card } from '../components/Common';
 import { 
-  Trash2, UserPlus, Store, MessageSquare, Search, 
-  RefreshCcw, AlertTriangle, Shield, CheckCircle, Clock,
-  BarChart2, Users, FileText
+  Trash2, Search, RefreshCcw, Shield, CheckCircle, Clock,
+  BarChart2, Users, FileText, Database, Settings
 } from 'lucide-react';
-
-export const AdminLogin = () => {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await loginAdmin(email, password);
-      navigate('/admin/dashboard');
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-6">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-6">
-           <Shield size={48} className="text-white mx-auto mb-2" />
-           <h1 className="text-2xl font-bold text-white">Admin Console</h1>
-           <p className="text-gray-500">System Management</p>
-        </div>
-        <Card className="bg-gray-800 border-gray-700">
-          <form onSubmit={handleSubmit}>
-            <Input label="Email" value={email} onChange={e => setEmail(e.target.value)} className="text-white" style={{color:'black'}}/>
-            <Input label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} className="text-white" style={{color:'black'}}/>
-            {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
-            <Button type="submit">Login</Button>
-          </form>
-        </Card>
-      </div>
-    </div>
-  );
-};
 
 const TabButton = ({ active, label, onClick }: any) => (
   <button 
     onClick={onClick}
-    className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${
+    className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${
       active 
         ? 'bg-gray-900 text-white shadow-lg' 
         : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
@@ -76,12 +36,13 @@ export const AdminDashboard = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [logs, setLogs] = useState<SystemLog[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [cgpaRecords, setCgpaRecords] = useState<CGPARecord[]>([]);
   
   // Search State
   const [searchTerm, setSearchTerm] = useState('');
 
   // Stats
-  const [stats, setStats] = useState({ totalStudents: 0, totalAppts: 0, pendingAppts: 0 });
+  const [stats, setStats] = useState({ totalStudents: 0, totalAppts: 0, pendingAppts: 0, completionRate: 0 });
 
   useEffect(() => {
     const u = getCurrentUser();
@@ -93,6 +54,8 @@ export const AdminDashboard = () => {
     if (tabParam) setTab(tabParam);
     
     refreshAll();
+    const interval = setInterval(refreshAll, 5000); // Poll for real-time updates
+    return () => clearInterval(interval);
   }, [location]);
 
   const refreshAll = () => {
@@ -100,16 +63,22 @@ export const AdminDashboard = () => {
     const a = getAllAppointments();
     const l = getSystemLogs();
     const r = getReviews();
+    const c = getAllCGPARecords();
     
     setStudents(s);
     setAppointments(a);
     setLogs(l);
     setReviews(r);
+    setCgpaRecords(c);
     
+    const completed = a.filter(apt => apt.status !== 'pending').length;
+    const rate = a.length > 0 ? Math.round((completed / a.length) * 100) : 0;
+
     setStats({
       totalStudents: s.length,
       totalAppts: a.length,
-      pendingAppts: a.filter(apt => apt.status === 'pending').length
+      pendingAppts: a.filter(apt => apt.status === 'pending').length,
+      completionRate: rate
     });
   };
 
@@ -139,35 +108,37 @@ export const AdminDashboard = () => {
       {/* Top Header */}
       <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-6 text-white shadow-xl flex items-center justify-between">
          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20">
                <Shield size={32} />
             </div>
             <div>
-               <h2 className="text-xl font-bold">System Admin</h2>
+               <h2 className="text-xl font-bold">System Admin Console</h2>
                <div className="flex items-center gap-2 text-gray-400 text-sm mt-1">
-                 <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                 Super Admin Access
+                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                 System Online
                </div>
             </div>
          </div>
          <div className="text-right hidden sm:block">
             <div className="text-3xl font-bold">{stats.totalStudents}</div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider">Active Students</div>
+            <div className="text-xs text-gray-400 uppercase tracking-wider">Registered Students</div>
          </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
         <TabButton active={tab === 'overview'} label="Overview" onClick={() => navigate('/admin/dashboard')} />
         <TabButton active={tab === 'students'} label="Students" onClick={() => navigate('/admin/dashboard?tab=students')} />
         <TabButton active={tab === 'appointments'} label="Appointments" onClick={() => navigate('/admin/dashboard?tab=appointments')} />
         <TabButton active={tab === 'reviews'} label="Reviews" onClick={() => navigate('/admin/dashboard?tab=reviews')} />
+        <TabButton active={tab === 'cgpa'} label="CGPA Records" onClick={() => navigate('/admin/dashboard?tab=cgpa')} />
+        <TabButton active={tab === 'settings'} label="Settings" onClick={() => navigate('/admin/dashboard?tab=settings')} />
         <TabButton active={tab === 'logs'} label="System Logs" onClick={() => navigate('/admin/dashboard?tab=logs')} />
       </div>
 
       {/* Overview Content */}
       {tab === 'overview' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="border-l-4 border-l-blue-500">
              <div className="flex justify-between items-start">
                 <div>
@@ -189,19 +160,28 @@ export const AdminDashboard = () => {
           <Card className="border-l-4 border-l-green-500">
              <div className="flex justify-between items-start">
                 <div>
+                   <p className="text-gray-500 text-xs font-bold uppercase">Dr. Completion Rate</p>
+                   <p className="text-3xl font-bold text-gray-900 mt-2">{stats.completionRate}%</p>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg text-green-600"><CheckCircle size={24} /></div>
+             </div>
+          </Card>
+          <Card className="border-l-4 border-l-purple-500">
+             <div className="flex justify-between items-start">
+                <div>
                    <p className="text-gray-500 text-xs font-bold uppercase">Total Reviews</p>
                    <p className="text-3xl font-bold text-gray-900 mt-2">{reviews.length}</p>
                 </div>
-                <div className="p-3 bg-green-50 rounded-lg text-green-600"><MessageSquare size={24} /></div>
+                <div className="p-3 bg-purple-50 rounded-lg text-purple-600"><FileText size={24} /></div>
              </div>
           </Card>
           
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
              <h3 className="font-bold text-gray-800 mb-4">Recent System Activity</h3>
              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 {logs.slice(0, 5).map(log => (
                   <div key={log.id} className="p-4 border-b border-gray-50 last:border-0 flex items-start gap-3">
-                     <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
+                     <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${
                        log.type === 'error' ? 'bg-red-500' : 
                        log.type === 'warning' ? 'bg-yellow-500' : 'bg-green-500'
                      }`} />
@@ -308,7 +288,83 @@ export const AdminDashboard = () => {
                </div>
              </div>
            ))}
+           {appointments.length === 0 && <p className="text-center text-gray-500 py-10">No appointments recorded.</p>}
         </div>
+      )}
+
+      {/* Reviews Management */}
+      {tab === 'reviews' && (
+         <div className="space-y-4">
+           {reviews.map(review => (
+             <div key={review.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+               <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-bold text-gray-800">{review.targetName} <span className="text-xs font-normal text-gray-400">({review.type})</span></h4>
+                    <div className="flex text-yellow-400 text-xs my-1">
+                       {Array.from({length: review.rating}).map((_,i) => <span key={i}>★</span>)}
+                    </div>
+                    <p className="text-gray-600 text-sm">"{review.comment}"</p>
+                    <p className="text-[10px] text-gray-400 mt-2">By {review.studentName} • {new Date(review.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <button onClick={async () => {
+                     await deleteReview(review.id);
+                     refreshAll();
+                  }} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16} /></button>
+               </div>
+             </div>
+           ))}
+           {reviews.length === 0 && <p className="text-center text-gray-500 py-10">No reviews submitted.</p>}
+         </div>
+      )}
+
+      {/* CGPA Records Management */}
+      {tab === 'cgpa' && (
+         <Card>
+            <h3 className="font-bold text-gray-800 mb-4">Student CGPA Submissions</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                 <thead className="bg-gray-50 border-b border-gray-200 text-gray-500">
+                    <tr>
+                       <th className="p-3">ID</th>
+                       <th className="p-3">Semester</th>
+                       <th className="p-3">GPA</th>
+                       <th className="p-3">Date</th>
+                    </tr>
+                 </thead>
+                 <tbody className="divide-y divide-gray-100">
+                    {cgpaRecords.map(rec => (
+                       <tr key={rec.id}>
+                          <td className="p-3 font-mono text-xs">{rec.studentId.slice(0, 8)}...</td>
+                          <td className="p-3">{rec.semester}</td>
+                          <td className="p-3 font-bold text-blue-600">{rec.gpa}</td>
+                          <td className="p-3 text-gray-500 text-xs">{new Date(rec.createdAt).toLocaleDateString()}</td>
+                       </tr>
+                    ))}
+                 </tbody>
+              </table>
+              {cgpaRecords.length === 0 && <p className="text-center text-gray-500 py-8">No CGPA records found.</p>}
+            </div>
+         </Card>
+      )}
+
+      {/* Settings */}
+      {tab === 'settings' && (
+         <Card>
+            <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
+               <Settings size={20} /> System Configuration
+            </h3>
+            <form className="space-y-4 max-w-lg">
+               <Input label="Application Name" defaultValue="Wellspring SmartApp" />
+               <Input label="University Contact Email" defaultValue="info@wellspring.edu.ng" />
+               <div className="flex items-center justify-between py-2">
+                  <span className="text-sm font-medium text-gray-700">Maintenance Mode</span>
+                  <div className="w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer">
+                     <div className="w-6 h-6 bg-white rounded-full shadow absolute left-0 top-0 border border-gray-200"></div>
+                  </div>
+               </div>
+               <Button type="button" onClick={() => alert("Settings Saved!")}>Save Changes</Button>
+            </form>
+         </Card>
       )}
 
       {/* System Logs */}
@@ -333,11 +389,6 @@ export const AdminDashboard = () => {
              ))}
            </div>
         </Card>
-      )}
-      
-      {/* Reviews tab reuse from previous */}
-      {tab === 'reviews' && (
-         <div className="text-center text-gray-500 py-10">Review moderation functionality available in previous module.</div>
       )}
     </div>
   );

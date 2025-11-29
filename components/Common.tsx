@@ -6,7 +6,7 @@ import {
   Menu, X, Home, Calendar, BookOpen, Utensils, 
   Calculator, Settings, LogOut, User as UserIcon, Bell,
   ChevronDown, ExternalLink, GraduationCap, ClipboardList,
-  Activity, Users, FileText, LayoutDashboard
+  Activity, Users, FileText, LayoutDashboard, Database, Shield
 } from 'lucide-react';
 
 // --- Colors ---
@@ -168,25 +168,27 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
   ];
 
   const adminMenuItems = [
-    { icon: LayoutDashboard, label: 'Overview', path: '/admin/dashboard' },
-    { icon: Users, label: 'Students', path: '/admin/dashboard?tab=students' },
+    { icon: LayoutDashboard, label: 'Overview Dashboard', path: '/admin/dashboard' },
+    { icon: Users, label: 'Students Management', path: '/admin/dashboard?tab=students' },
     { icon: Calendar, label: 'Appointments', path: '/admin/dashboard?tab=appointments' },
     { icon: FileText, label: 'Reviews', path: '/admin/dashboard?tab=reviews' },
+    { icon: Calculator, label: 'CGPA Records', path: '/admin/dashboard?tab=cgpa' },
+    { icon: Settings, label: 'System Settings', path: '/admin/dashboard?tab=settings' },
     { icon: Activity, label: 'System Logs', path: '/admin/dashboard?tab=logs' },
   ];
 
   const doctorMenuItems = [
     { icon: Home, label: 'Dashboard', path: '/doctor/dashboard' },
-    { icon: Calendar, label: 'All Appointments', path: '/doctor/dashboard' },
-    { icon: ClipboardList, label: 'Medical Notes', path: '/doctor/dashboard', badge: 'Soon' },
-    { icon: Settings, label: 'Settings', path: '/doctor/dashboard' },
+    { icon: Calendar, label: 'Incoming Appointments', path: '/doctor/dashboard?tab=requests' },
+    { icon: ClipboardList, label: 'Medical Notes', path: '/doctor/dashboard?tab=notes', badge: 'Soon' },
+    { icon: Settings, label: 'Settings', path: '/doctor/dashboard?tab=settings' },
   ];
 
   let menuItems = studentMenuItems;
   if (user?.role === 'admin') menuItems = adminMenuItems;
   if (user?.role === 'doctor') menuItems = doctorMenuItems;
 
-  // Render Navbar for Logged Out State (Landing Page)
+  // Render Navbar for Logged Out State (Unified Login)
   if (!user) {
     return (
       <div className="min-h-screen bg-[#F3F4F6]">
@@ -195,7 +197,6 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
             {/* Logo Left */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#0057FF]">
-                 {/* Placeholder for Wellspring Logo */}
                  <GraduationCap size={24} />
               </div>
               <div className="hidden sm:block">
@@ -212,7 +213,7 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
 
   const roleLabels = {
     student: 'Student Portal',
-    doctor: 'Doctor Portal',
+    doctor: 'Doctor Panel',
     admin: 'Admin Console'
   };
 
@@ -230,7 +231,8 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
             >
               <Menu size={24} />
             </button>
-            <h1 className="font-bold text-lg text-gray-800 truncate">
+            <h1 className="font-bold text-lg text-gray-800 truncate flex items-center gap-2">
+              {user.role === 'admin' && <Shield size={18} className="text-blue-600"/>}
               {title || roleLabels[user.role]}
             </h1>
           </div>
@@ -246,9 +248,12 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center gap-2 hover:bg-gray-50 p-1 pr-2 rounded-full border border-transparent hover:border-gray-200 transition-all"
                >
-                 <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100">
+                 <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100 relative">
                    <img src={user.profilePicUrl} alt="Profile" className="w-full h-full object-cover" />
                  </div>
+                 {user.role === 'doctor' && (
+                    <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                 )}
                  <ChevronDown size={14} className="text-gray-400" />
                </button>
 
@@ -257,7 +262,7 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 animate-fade-in z-50">
                    <div className="px-4 py-3 border-b border-gray-100 mb-2">
                      <p className="font-bold text-gray-800 truncate">{user.fullName}</p>
-                     <p className="text-xs text-gray-500 truncate">{user.matricNumber || user.role}</p>
+                     <p className="text-xs text-gray-500 truncate capitalize">{user.role}</p>
                    </div>
                    
                    {user.role === 'student' && (
@@ -273,7 +278,7 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
 
                    {user.role === 'admin' && (
                      <button onClick={() => { navigate('/admin/dashboard?tab=settings'); setIsProfileOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-[#0057FF] flex items-center gap-2">
-                       <Settings size={16} /> Settings
+                       <Settings size={16} /> System Settings
                      </button>
                    )}
                    
@@ -330,7 +335,6 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
                     key={item.label}
                     onClick={() => {
                       if (item.path.includes('?')) {
-                        // Handle query params navigation manually if needed, or just allow router
                         navigate(item.path);
                       } else {
                         navigate(item.path);
