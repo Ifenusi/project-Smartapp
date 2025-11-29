@@ -1,16 +1,67 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { User } from '../types';
 import { logout } from '../services/api';
 import { 
   Menu, X, Home, Calendar, BookOpen, Utensils, 
-  Calculator, Settings, LogOut, User as UserIcon, Bell 
+  Calculator, Settings, LogOut, User as UserIcon, Bell,
+  ChevronDown, ExternalLink, GraduationCap, ClipboardList,
+  Activity, Users, FileText, LayoutDashboard
 } from 'lucide-react';
 
 // --- Colors ---
 // Primary Blue: #0057FF (bg-[#0057FF])
 // Soft Gray: #F3F4F6 (bg-gray-100)
 // White: #FFFFFF (bg-white)
+
+// --- Carousel Component ---
+const CAROUSEL_SLIDES = [
+  { text: "No let your CGPA reach red before you serious oo.", sub: "Stay focused, stay sharp." },
+  { text: "Be productive when you can. Rest when you must.", sub: "Balance is key to wellness." },
+  { text: "Relate with others with love and respect.", sub: "We rise by lifting others." },
+  { text: "Remember: we all came from different backgrounds — be kind.", sub: "Empathy builds community." },
+  { text: "Small consistency > big procrastination.", sub: "Start small, keep going." }
+];
+
+export const Carousel = () => {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent(prev => (prev + 1) % CAROUSEL_SLIDES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="w-full bg-[#0057FF] text-white rounded-2xl p-8 mb-8 relative overflow-hidden shadow-lg shadow-blue-500/20">
+      {/* Abstract Background Shapes */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-xl" />
+      
+      <div className="relative z-10 h-[140px] flex flex-col items-center justify-center text-center transition-all duration-500">
+        <h2 key={`head-${current}`} className="text-xl md:text-2xl font-bold mb-3 animate-fade-in leading-snug">
+          "{CAROUSEL_SLIDES[current].text}"
+        </h2>
+        <p key={`sub-${current}`} className="text-blue-100 text-sm md:text-base animate-fade-in">
+          — {CAROUSEL_SLIDES[current].sub}
+        </p>
+      </div>
+
+      <div className="flex justify-center gap-2 mt-4 relative z-10">
+        {CAROUSEL_SLIDES.map((_, idx) => (
+          <button 
+            key={idx}
+            onClick={() => setCurrent(idx)}
+            className={`w-2 h-2 rounded-full transition-all ${
+              idx === current ? 'bg-white w-6' : 'bg-white/30'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 // --- Button ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -87,56 +138,91 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  const menuItems = [
+  const studentMenuItems = [
     { icon: Home, label: 'Home', path: '/student/dashboard' },
     { icon: Calendar, label: 'Book Appointment', path: '/student/book' },
-    { icon: BookOpen, label: 'History', path: '/student/history' },
+    { icon: Calculator, label: 'Calculate CGPA', path: '/student/cgpa' },
     { icon: UserIcon, label: 'Review Lecturers', path: '/student/lecturers-review' },
-    { icon: Utensils, label: 'Food Vendors', path: '/student/food-review' },
-    { icon: Calculator, label: 'CGPA Calculator', path: '/student/cgpa' },
+    { icon: Utensils, label: 'Review Food Vendors', path: '/student/food-review' },
     { icon: Settings, label: 'Settings', path: '/student/settings' },
   ];
 
-  if (!user) {
-    return <div className="min-h-screen bg-[#F3F4F6]">{children}</div>;
-  }
+  const adminMenuItems = [
+    { icon: LayoutDashboard, label: 'Overview', path: '/admin/dashboard' },
+    { icon: Users, label: 'Students', path: '/admin/dashboard?tab=students' },
+    { icon: Calendar, label: 'Appointments', path: '/admin/dashboard?tab=appointments' },
+    { icon: FileText, label: 'Reviews', path: '/admin/dashboard?tab=reviews' },
+    { icon: Activity, label: 'System Logs', path: '/admin/dashboard?tab=logs' },
+  ];
 
-  // Doctor Layout is simpler as per brief
-  if (user.role === 'doctor') {
+  const doctorMenuItems = [
+    { icon: Home, label: 'Dashboard', path: '/doctor/dashboard' },
+    { icon: Calendar, label: 'All Appointments', path: '/doctor/dashboard' },
+    { icon: ClipboardList, label: 'Medical Notes', path: '/doctor/dashboard', badge: 'Soon' },
+    { icon: Settings, label: 'Settings', path: '/doctor/dashboard' },
+  ];
+
+  let menuItems = studentMenuItems;
+  if (user?.role === 'admin') menuItems = adminMenuItems;
+  if (user?.role === 'doctor') menuItems = doctorMenuItems;
+
+  // Render Navbar for Logged Out State (Landing Page)
+  if (!user) {
     return (
       <div className="min-h-screen bg-[#F3F4F6]">
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-800">Doctor Dashboard</h1>
-            <button 
-              onClick={handleLogout}
-              className="text-gray-500 hover:text-red-600 font-medium text-sm transition-colors"
-            >
-              Logout
-            </button>
+        <header className="bg-white sticky top-0 z-20 shadow-sm border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            {/* Logo Left */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#0057FF]">
+                 {/* Placeholder for Wellspring Logo */}
+                 <GraduationCap size={24} />
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="font-bold text-gray-900 text-sm leading-tight">WELLSPRING</h1>
+                <p className="text-[10px] text-gray-500 font-medium tracking-wider">UNIVERSITY</p>
+              </div>
+            </div>
           </div>
         </header>
-        <main className="max-w-5xl mx-auto px-4 py-6">
-          {children}
-        </main>
+        {children}
       </div>
     );
   }
 
-  // Student Layout
+  const roleLabels = {
+    student: 'Student Portal',
+    doctor: 'Doctor Portal',
+    admin: 'Admin Console'
+  };
+
   return (
     <div className="min-h-screen bg-[#F3F4F6]">
-      {/* Top Bar */}
+      {/* Top Bar (Authenticated) */}
       <header className="bg-white sticky top-0 z-20 shadow-sm/50">
-        <div className="flex items-center justify-between px-4 h-16">
+        <div className="flex items-center justify-between px-4 h-16 max-w-7xl mx-auto w-full">
+          
+          {/* Left: Hamburger & Menu */}
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsMenuOpen(true)}
@@ -144,24 +230,66 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
             >
               <Menu size={24} />
             </button>
-            <h1 className="font-bold text-lg text-gray-800 truncate max-w-[150px] sm:max-w-none">
-              {title || 'Student Smart App'}
+            <h1 className="font-bold text-lg text-gray-800 truncate">
+              {title || roleLabels[user.role]}
             </h1>
           </div>
           
-          <div className="flex items-center gap-3">
-             <button className="text-gray-400 hover:text-gray-600">
+          {/* Right: Profile Dropdown */}
+          <div className="flex items-center gap-3" ref={profileRef}>
+             <button className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 hidden sm:block">
                <Bell size={20} />
              </button>
-             <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100">
-               <img src={user.profilePicUrl} alt="Profile" className="w-full h-full object-cover" />
+             
+             <div className="relative">
+               <button 
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 hover:bg-gray-50 p-1 pr-2 rounded-full border border-transparent hover:border-gray-200 transition-all"
+               >
+                 <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100">
+                   <img src={user.profilePicUrl} alt="Profile" className="w-full h-full object-cover" />
+                 </div>
+                 <ChevronDown size={14} className="text-gray-400" />
+               </button>
+
+               {/* Profile Dropdown Menu */}
+               {isProfileOpen && (
+                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 animate-fade-in z-50">
+                   <div className="px-4 py-3 border-b border-gray-100 mb-2">
+                     <p className="font-bold text-gray-800 truncate">{user.fullName}</p>
+                     <p className="text-xs text-gray-500 truncate">{user.matricNumber || user.role}</p>
+                   </div>
+                   
+                   {user.role === 'student' && (
+                     <>
+                       <button onClick={() => { navigate('/student/settings'); setIsProfileOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-[#0057FF] flex items-center gap-2">
+                         <Settings size={16} /> Account Settings
+                       </button>
+                       <button onClick={() => { navigate('/student/history'); setIsProfileOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-[#0057FF] flex items-center gap-2">
+                         <Calendar size={16} /> Appointment History
+                       </button>
+                     </>
+                   )}
+
+                   {user.role === 'admin' && (
+                     <button onClick={() => { navigate('/admin/dashboard?tab=settings'); setIsProfileOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-[#0057FF] flex items-center gap-2">
+                       <Settings size={16} /> Settings
+                     </button>
+                   )}
+                   
+                   <div className="my-2 border-t border-gray-100" />
+                   <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                     <LogOut size={16} /> Logout
+                   </button>
+                 </div>
+               )}
              </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="p-4 pb-20 max-w-lg mx-auto md:max-w-2xl lg:max-w-4xl">
+      <main className="p-4 pb-20 max-w-4xl mx-auto">
         {children}
       </main>
 
@@ -176,14 +304,19 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
           
           {/* Menu Content */}
           <div className="relative w-[280px] h-full bg-white shadow-2xl flex flex-col animate-slide-in-left">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-[#0057FF]">Menu</h2>
-                <p className="text-xs text-gray-400">Student Smart App</p>
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-blue-50">
+              <div className="flex items-center gap-3">
+                 <div className="w-8 h-8 rounded-full bg-[#0057FF] flex items-center justify-center text-white">
+                    <GraduationCap size={18} />
+                 </div>
+                 <div>
+                    <h2 className="text-sm font-bold text-gray-900">WELLSPRING</h2>
+                    <p className="text-[10px] text-gray-500">SMART APP PROJECT</p>
+                 </div>
               </div>
               <button 
                 onClick={() => setIsMenuOpen(false)}
-                className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50"
+                className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
               >
                 <X size={20} />
               </button>
@@ -191,12 +324,17 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
 
             <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
               {menuItems.map((item) => {
-                const isActive = location.pathname === item.path;
+                const isActive = location.pathname + location.search === item.path;
                 return (
                   <button
-                    key={item.path}
+                    key={item.label}
                     onClick={() => {
-                      navigate(item.path);
+                      if (item.path.includes('?')) {
+                        // Handle query params navigation manually if needed, or just allow router
+                        navigate(item.path);
+                      } else {
+                        navigate(item.path);
+                      }
                       setIsMenuOpen(false);
                     }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
@@ -206,16 +344,23 @@ export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
                     }`}
                   >
                     <item.icon size={18} className={isActive ? 'text-[#0057FF]' : 'text-gray-400'} />
-                    {item.label}
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {/* @ts-ignore */}
+                    {item.badge && (
+                      <span className="px-2 py-0.5 text-[10px] bg-blue-100 text-blue-700 rounded-full font-bold">
+                        {/* @ts-ignore */}
+                        {item.badge}
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </nav>
 
-            <div className="p-4 border-t border-gray-100">
+            <div className="p-4 border-t border-gray-100 bg-gray-50">
               <button 
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors border border-red-100 bg-white"
               >
                 <LogOut size={18} />
                 Logout

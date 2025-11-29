@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { loginStudent, registerStudent } from '../services/api';
-import { Button, Input, Card } from '../components/Common';
+import { Button, Input, Card, Carousel } from '../components/Common';
 
-export const StudentLogin = () => {
+export const LandingPage = () => {
   const navigate = useNavigate();
+  const [isRegistering, setIsRegistering] = useState(false);
   const [matric, setMatric] = useState('');
   const [password, setPassword] = useState('');
+  
+  // Registration State
+  const [regData, setRegData] = useState({
+    fullName: '',
+    matric: '',
+    email: '',
+    phone: '',
+    password: '',
+  });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -24,97 +35,15 @@ export const StudentLogin = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white sm:bg-[#F3F4F6]">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-[#0057FF] rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-blue-500/20">
-            <span className="text-white text-2xl font-bold">S</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Student Smart App</h1>
-          <p className="text-gray-500">Your digital campus companion</p>
-        </div>
-
-        <Card className="shadow-none sm:shadow-lg border-none sm:border">
-          <form onSubmit={handleSubmit}>
-            <Input 
-              label="Matric Number" 
-              placeholder="e.g. COSC/62927"
-              value={matric}
-              onChange={e => setMatric(e.target.value)}
-              required
-            />
-            <Input 
-              label="Password" 
-              type="password"
-              placeholder="Surname (lowercase)"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
-            
-            <div className="flex items-center justify-between mb-6">
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input type="checkbox" className="rounded text-[#0057FF] focus:ring-[#0057FF]" />
-                Remember me
-              </label>
-              <Link to="/register" className="text-sm font-semibold text-[#0057FF] hover:underline">
-                Create Account
-              </Link>
-            </div>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 text-center">
-                {error}
-              </div>
-            )}
-
-            <Button type="submit" isLoading={loading}>
-              Login
-            </Button>
-          </form>
-        </Card>
-
-        <div className="mt-8 text-center text-xs text-gray-400">
-          Powered by Student Smart Systems
-          <div className="mt-2">
-            <Link to="/doctor/login" className="text-gray-300 hover:text-gray-500 underline">
-              Doctor Login
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export const StudentRegister = () => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  // Form State
-  const [formData, setFormData] = useState({
-    fullName: '',
-    matric: '',
-    email: '',
-    phone: '',
-    password: '',
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      // In a real app, handle file upload for profile pic here
-      await registerStudent(formData);
-      navigate('/');
+      await registerStudent(regData);
+      setIsRegistering(false); // Switch to login after success
+      setError('');
+      alert('Account created successfully! Please login.');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     } finally {
@@ -123,78 +52,130 @@ export const StudentRegister = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-white sm:bg-[#F3F4F6]">
-      <div className="w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">Create Account</h2>
-        
-        <Card className="shadow-none sm:shadow-lg border-none sm:border">
-          <form onSubmit={handleSubmit} className="space-y-1">
-            <Input 
-              label="Full Name" 
-              name="fullName"
-              placeholder="John Doe"
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-            />
-            <Input 
-              label="Matric Number" 
-              name="matric"
-              placeholder="COSC/..."
-              value={formData.matric}
-              onChange={handleChange}
-              required
-            />
-            <Input 
-              label="Email" 
-              type="email"
-              name="email"
-              placeholder="student@wellspring.edu.ng"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-            <Input 
-              label="Phone Number" 
-              type="tel"
-              name="phone"
-              placeholder="080..."
-              value={formData.phone}
-              onChange={handleChange}
-              required
-            />
-            <Input 
-              label="Password" 
-              type="password"
-              name="password"
-              placeholder="Create a password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-            
-            <div className="mb-6">
-               <label className="block text-sm font-medium text-gray-700 mb-1.5 ml-1">Profile Picture</label>
-               <input type="file" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-            </div>
+    <div className="min-h-[calc(100vh-64px)] flex flex-col items-center justify-start pt-6 pb-12 px-4 bg-[#F3F4F6]">
+      <div className="w-full max-w-lg">
+        {/* Branding Title */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase">
+            Wellspring Smart App Project
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Your Digital Campus Companion
+          </p>
+        </div>
 
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center">
-                {error}
-              </div>
-            )}
+        {/* Carousel Component */}
+        <Carousel />
 
-            <Button type="submit" isLoading={loading}>
-              Create Account
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <Link to="/" className="text-sm text-gray-500 hover:text-[#0057FF]">
-              Already have an account? Login
-            </Link>
+        {/* Auth Card */}
+        <Card className="shadow-xl border-0">
+          <div className="flex mb-6 border-b border-gray-100">
+            <button 
+              className={`flex-1 pb-3 text-sm font-semibold transition-colors ${!isRegistering ? 'text-[#0057FF] border-b-2 border-[#0057FF]' : 'text-gray-400 hover:text-gray-600'}`}
+              onClick={() => setIsRegistering(false)}
+            >
+              Login
+            </button>
+            <button 
+              className={`flex-1 pb-3 text-sm font-semibold transition-colors ${isRegistering ? 'text-[#0057FF] border-b-2 border-[#0057FF]' : 'text-gray-400 hover:text-gray-600'}`}
+              onClick={() => setIsRegistering(true)}
+            >
+              Register
+            </button>
           </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 text-center animate-fade-in">
+              {error}
+            </div>
+          )}
+
+          {!isRegistering ? (
+            <form onSubmit={handleLogin} className="animate-fade-in">
+              <Input 
+                label="Matric Number" 
+                placeholder="e.g. COSC/62927"
+                value={matric}
+                onChange={e => setMatric(e.target.value)}
+                required
+              />
+              <Input 
+                label="Password" 
+                type="password"
+                placeholder="Surname (lowercase)"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+              />
+              <div className="flex items-center justify-between mb-6">
+                 <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                  <input type="checkbox" className="rounded text-[#0057FF] focus:ring-[#0057FF]" />
+                  Remember me
+                </label>
+              </div>
+              <Button type="submit" isLoading={loading}>
+                Access Student Portal
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleRegister} className="animate-fade-in space-y-1">
+              <Input 
+                label="Full Name" 
+                placeholder="John Doe"
+                value={regData.fullName}
+                onChange={e => setRegData({...regData, fullName: e.target.value})}
+                required
+              />
+              <Input 
+                label="Matric Number" 
+                placeholder="e.g. COSC/..."
+                value={regData.matric}
+                onChange={e => setRegData({...regData, matric: e.target.value})}
+                required
+              />
+              <Input 
+                label="Email" 
+                type="email"
+                placeholder="student@wellspring.edu.ng"
+                value={regData.email}
+                onChange={e => setRegData({...regData, email: e.target.value})}
+                required
+              />
+              <Input 
+                label="Phone" 
+                type="tel"
+                placeholder="080..."
+                value={regData.phone}
+                onChange={e => setRegData({...regData, phone: e.target.value})}
+                required
+              />
+              <Input 
+                label="Password" 
+                type="password"
+                placeholder="Create Password"
+                value={regData.password}
+                onChange={e => setRegData({...regData, password: e.target.value})}
+                required
+              />
+              <div className="mb-4">
+                 <label className="block text-sm font-medium text-gray-700 mb-1.5 ml-1">Profile Picture (Optional)</label>
+                 <input type="file" className="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+              </div>
+              <Button type="submit" isLoading={loading}>
+                Create Account
+              </Button>
+            </form>
+          )}
         </Card>
+
+        <div className="mt-8 text-center space-y-2">
+          <p className="text-xs text-gray-400">Powered by Wellspring Smart Systems</p>
+          <div className="flex gap-4 justify-center text-xs text-gray-400">
+             <a href="#/doctor/login" className="hover:text-[#0057FF] underline">Doctor Login</a>
+             <span>|</span>
+             <a href="#/admin/login" className="hover:text-[#0057FF] underline">Admin Login</a>
+          </div>
+        </div>
       </div>
     </div>
   );

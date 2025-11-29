@@ -4,11 +4,17 @@ import { getCurrentUser } from './services/api';
 import { Layout } from './components/Common';
 
 // Auth Pages
-import { StudentLogin, StudentRegister } from './pages/StudentAuth';
+import { LandingPage } from './pages/StudentAuth';
 import { DoctorLogin } from './pages/DoctorApp';
+import { AdminLogin, AdminDashboard } from './pages/AdminApp';
 
 // Student Pages
-import { StudentDashboard, BookAppointment, AppointmentHistory, FutureFeature } from './pages/StudentApp';
+import { 
+  StudentDashboard, BookAppointment, 
+  LecturerReview, VendorReview, 
+  CGPACalculator, Settings 
+} from './pages/StudentApp';
+import { AppointmentHistory } from './pages/StudentApp'; // Reusing from previous if available or export it
 
 // Doctor Pages
 import { DoctorDashboard } from './pages/DoctorApp';
@@ -24,9 +30,15 @@ const App = () => {
     <HashRouter>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<StudentLogin />} />
-        <Route path="/register" element={<StudentRegister />} />
+        <Route path="/" element={<LayoutWrapper><LandingPage /></LayoutWrapper>} />
+        
+        {/* Doctor Routes */}
         <Route path="/doctor/login" element={<DoctorLogin />} />
+        <Route path="/doctor/dashboard" element={<LayoutWrapper><DoctorDashboard /></LayoutWrapper>} />
+
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<LayoutWrapper title="Admin Panel"><AdminDashboard /></LayoutWrapper>} />
 
         {/* Student Routes */}
         <Route path="/student/dashboard" element={
@@ -45,32 +57,25 @@ const App = () => {
           </LayoutWrapper>
         } />
         
-        {/* Future Features */}
+        {/* Feature Routes */}
         <Route path="/student/lecturers-review" element={
-          <LayoutWrapper title="Reviews">
-            <FutureFeature title="Lecturer Reviews" subtitle="Rate and review your learning experience." />
+          <LayoutWrapper title="Review Lecturers">
+            <LecturerReview />
           </LayoutWrapper>
         } />
         <Route path="/student/food-review" element={
-          <LayoutWrapper title="Reviews">
-            <FutureFeature title="Food Vendor Reviews" subtitle="Find the best food spots on campus." />
+          <LayoutWrapper title="Review Vendors">
+            <VendorReview />
           </LayoutWrapper>
         } />
         <Route path="/student/cgpa" element={
           <LayoutWrapper title="CGPA Calculator">
-            <FutureFeature title="CGPA Calculator" subtitle="Track your academic performance easily." />
+            <CGPACalculator />
           </LayoutWrapper>
         } />
         <Route path="/student/settings" element={
-          <LayoutWrapper title="Settings">
-            <FutureFeature title="Settings" subtitle="Manage your profile and preferences." />
-          </LayoutWrapper>
-        } />
-
-        {/* Doctor Routes */}
-        <Route path="/doctor/dashboard" element={
-          <LayoutWrapper>
-            <DoctorDashboard />
+          <LayoutWrapper title="Account Settings">
+            <Settings />
           </LayoutWrapper>
         } />
 
