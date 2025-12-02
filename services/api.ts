@@ -84,6 +84,7 @@ export const registerStudent = async (data: {
   email: string;
   phone: string;
   password: string;
+  courseOfStudy: string;
   profilePic?: string; 
 }): Promise<User> => {
   await new Promise(r => setTimeout(r, 800));
@@ -101,8 +102,9 @@ export const registerStudent = async (data: {
     phoneNumber: data.phone,
     role: 'student',
     profilePicUrl: data.profilePic || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + data.matric,
-    department: 'Computer Science', // Default for MVP
-    faculty: 'Computing', // Default for MVP
+    department: 'Wellspring Student', // Generic default
+    courseOfStudy: data.courseOfStudy,
+    faculty: 'Undergraduate', // Generic default
   };
 
   const userWithPass = { ...newUser, password: data.password };

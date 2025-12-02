@@ -19,6 +19,7 @@ export const UnifiedLogin = () => {
     email: '',
     phone: '',
     password: '',
+    courseOfStudy: '',
   });
 
   const [error, setError] = useState('');
@@ -144,6 +145,13 @@ export const UnifiedLogin = () => {
                 placeholder="e.g. COSC/..."
                 value={regData.matric}
                 onChange={e => setRegData({...regData, matric: e.target.value})}
+                required
+              />
+              <Input 
+                label="Course of Study" 
+                placeholder="e.g. Computer Science"
+                value={regData.courseOfStudy}
+                onChange={e => setRegData({...regData, courseOfStudy: e.target.value})}
                 required
               />
               <Input 

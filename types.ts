@@ -10,6 +10,7 @@ export interface User {
   phoneNumber?: string;
   department?: string;
   faculty?: string;
+  courseOfStudy?: string;
 }
 
 export interface Appointment {

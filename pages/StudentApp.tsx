@@ -6,7 +6,7 @@ import {
   saveCGPARecord, getStudentCGPARecords, updateStudentProfile
 } from '../services/api';
 import { User, Appointment, REASONS_FOR_VISIT, Lecturer, Vendor, Review, CGPARecord, Course } from '../types';
-import { Button, Input, Card } from '../components/Common';
+import { Button, Input, Card, Carousel } from '../components/Common';
 import { 
   Plus, Clock, CheckCircle, AlertCircle, Star, Trash2, 
   Calculator, User as UserIcon, Utensils, Save, X 
@@ -40,12 +40,13 @@ export const StudentDashboard = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <section className="text-center py-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to the Wellspring Student Smart App 🎓✨</h2>
+      <Carousel />
+      
+      <section className="text-center pb-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome, {user.fullName.split(' ')[0]}! 🎓✨</h2>
         <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">
           We created this space to help you navigate school life with ease. 
           From clinic appointments to CGPA tracking — we've got you covered. 
-          Your wellbeing matters. Your voice matters. You matter.
         </p>
       </section>
 
@@ -170,7 +171,7 @@ export const BookAppointment = () => {
 
           <Input 
             label="Notes (Optional)" 
-            as="textarea"
+            as="textarea" 
             placeholder="Describe your symptoms briefly..."
             value={formData.note}
             onChange={e => setFormData({...formData, note: e.target.value})}

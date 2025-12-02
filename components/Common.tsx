@@ -6,7 +6,7 @@ import {
   Menu, X, Home, Calendar, BookOpen, Utensils, 
   Calculator, Settings, LogOut, User as UserIcon, Bell,
   ChevronDown, ExternalLink, GraduationCap, ClipboardList,
-  Activity, Users, FileText, LayoutDashboard, Database, Shield
+  Activity, Users, FileText, LayoutDashboard, Database, Shield, Globe, Plus, Clock
 } from 'lucide-react';
 
 // --- Colors ---
@@ -39,23 +39,21 @@ export const Carousel = () => {
       <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-xl" />
       
-      <div className="relative z-10 h-[140px] flex flex-col items-center justify-center text-center transition-all duration-500">
+      <div className="relative z-10 h-[100px] flex flex-col items-center justify-center text-center transition-all duration-500">
         <h2 key={`head-${current}`} className="text-xl md:text-2xl font-bold mb-3 animate-fade-in leading-snug">
           "{CAROUSEL_SLIDES[current].text}"
         </h2>
-        <p key={`sub-${current}`} className="text-blue-100 text-sm md:text-base animate-fade-in">
+        <p key={`sub-${current}`} className="text-blue-200 text-sm animate-fade-in">
           — {CAROUSEL_SLIDES[current].sub}
         </p>
       </div>
-
-      <div className="flex justify-center gap-2 mt-4 relative z-10">
-        {CAROUSEL_SLIDES.map((_, idx) => (
-          <button 
-            key={idx}
-            onClick={() => setCurrent(idx)}
-            className={`w-2 h-2 rounded-full transition-all ${
-              idx === current ? 'bg-white w-6' : 'bg-white/30'
-            }`}
+      
+      {/* Dots */}
+      <div className="absolute bottom-4 left-0 w-full flex justify-center gap-2">
+        {CAROUSEL_SLIDES.map((_, i) => (
+          <div 
+            key={i} 
+            className={`w-1.5 h-1.5 rounded-full transition-all ${i === current ? 'bg-white w-4' : 'bg-white/40'}`}
           />
         ))}
       </div>
@@ -63,316 +61,221 @@ export const Carousel = () => {
   );
 };
 
-// --- Button ---
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'outline';
-  isLoading?: boolean;
-}
-
-export const Button: React.FC<ButtonProps> = ({ 
-  children, variant = 'primary', className = '', isLoading, disabled, ...props 
-}) => {
-  const baseStyles = "w-full py-3.5 px-6 rounded-xl font-semibold transition-all duration-200 active:scale-95 flex items-center justify-center shadow-sm disabled:opacity-50 disabled:cursor-not-allowed";
-  
+// --- Reusable UI Components ---
+export const Button = ({ children, onClick, variant = 'primary', className = '', isLoading = false, type = 'button', disabled = false }: any) => {
+  const baseStyle = "w-full py-3.5 rounded-xl font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2";
   const variants = {
-    primary: "bg-[#0057FF] text-white hover:bg-blue-700 shadow-[#0057FF]/30 hover:shadow-lg",
-    secondary: "bg-white text-gray-800 border border-gray-200 hover:bg-gray-50",
-    danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-100",
-    outline: "bg-transparent border-2 border-[#0057FF] text-[#0057FF] hover:bg-blue-50"
+    primary: "bg-[#0057FF] text-white hover:bg-blue-700 shadow-lg shadow-blue-500/20",
+    secondary: "bg-gray-900 text-white hover:bg-gray-800",
+    outline: "bg-transparent border-2 border-gray-200 text-gray-600 hover:bg-gray-50",
+    danger: "bg-red-50 text-red-600 hover:bg-red-100"
   };
 
   return (
     <button 
-      className={`${baseStyles} ${variants[variant]} ${className}`}
-      disabled={isLoading || disabled}
-      {...props}
+      type={type}
+      disabled={disabled || isLoading}
+      onClick={onClick}
+      className={`${baseStyle} ${variants[variant as keyof typeof variants]} ${className}`}
     >
-      {isLoading ? (
-        <span className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-      ) : null}
+      {isLoading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
       {children}
     </button>
   );
 };
 
-// --- Input ---
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> {
-  label: string;
-  error?: string;
-  as?: 'input' | 'select' | 'textarea';
-}
+export const Input = ({ label, type = "text", as = "input", children, className = "", ...props }: any) => (
+  <div className={`mb-4 ${className}`}>
+    {label && <label className="block text-sm font-medium text-gray-700 mb-1.5 ml-1">{label}</label>}
+    {as === "select" ? (
+       <div className="relative">
+         <select className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-[#0057FF] outline-none transition-all appearance-none text-gray-700 font-medium text-sm" {...props}>
+           {children}
+         </select>
+         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+       </div>
+    ) : as === "textarea" ? (
+      <textarea className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-[#0057FF] outline-none transition-all text-gray-700 font-medium text-sm min-h-[100px] resize-y" {...props} />
+    ) : (
+      <input type={type} className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-[#0057FF] outline-none transition-all text-gray-700 font-medium text-sm" {...props} />
+    )}
+  </div>
+);
 
-export const Input: React.FC<InputProps> = ({ label, error, className = '', as = 'input', ...props }) => {
-  const baseInputStyles = "w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#0057FF] focus:ring-4 focus:ring-[#0057FF]/10 outline-none transition-all duration-200 text-gray-800 placeholder-gray-400";
-  
-  return (
-    <div className={`mb-4 ${className}`}>
-      <label className="block text-sm font-medium text-gray-700 mb-1.5 ml-1">{label}</label>
-      {as === 'select' ? (
-        <select className={baseInputStyles} {...(props as any)}>
-            {props.children}
-        </select>
-      ) : as === 'textarea' ? (
-        <textarea className={`${baseInputStyles} min-h-[100px] resize-y`} {...(props as any)} />
-      ) : (
-        <input className={baseInputStyles} {...(props as any)} />
-      )}
-      {error && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{error}</p>}
-    </div>
-  );
-};
-
-// --- Card ---
-export const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 ${className}`}>
+export const Card = ({ children, className = "", title, action }: any) => (
+  <div className={`bg-white rounded-2xl p-6 border border-gray-100 shadow-sm ${className}`}>
+    {(title || action) && (
+      <div className="flex justify-between items-center mb-6">
+        {title && <h3 className="font-bold text-gray-800 text-lg">{title}</h3>}
+        {action}
+      </div>
+    )}
     {children}
   </div>
 );
 
 // --- Layout & Sidebar ---
-interface LayoutProps {
-  user: User | null;
-  children: React.ReactNode;
-  title?: string;
+
+interface MenuItem {
+  icon: any;
+  label: string;
+  path: string;
+  external?: boolean;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ user, children, title }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+const STUDENT_ITEMS: MenuItem[] = [
+  { icon: Home, label: 'Home', path: '/student/dashboard' },
+  { icon: Plus, label: 'Book Appointment', path: '/student/book' },
+  { icon: Clock, label: 'History', path: '/student/history' },
+  { icon: FileText, label: 'Lecturer Review', path: '/student/lecturers-review' },
+  { icon: Utensils, label: 'Vendor Review', path: '/student/food-review' },
+  { icon: Calculator, label: 'CGPA Calculator', path: '/student/cgpa' },
+  { icon: Settings, label: 'Settings', path: '/student/settings' },
+  { icon: Globe, label: 'Official Website', path: 'https://wellspringuniversity.edu.ng/', external: true },
+  { icon: ExternalLink, label: 'Student Portal', path: 'https://studentportal.wellspringuniversity.app/login', external: true },
+];
+
+const DOCTOR_ITEMS: MenuItem[] = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/doctor/dashboard' },
+  { icon: Calendar, label: 'Requests', path: '/doctor/dashboard?tab=requests' },
+  { icon: Clock, label: 'History', path: '/doctor/dashboard?tab=history' },
+];
+
+const ADMIN_ITEMS: MenuItem[] = [
+  { icon: LayoutDashboard, label: 'Overview', path: '/admin/dashboard' },
+  { icon: Users, label: 'Students', path: '/admin/dashboard?tab=students' },
+  { icon: Calendar, label: 'Appointments', path: '/admin/dashboard?tab=appointments' },
+  { icon: ClipboardList, label: 'Reviews', path: '/admin/dashboard?tab=reviews' },
+  { icon: GraduationCap, label: 'CGPA Records', path: '/admin/dashboard?tab=cgpa' },
+  { icon: Settings, label: 'Settings', path: '/admin/dashboard?tab=settings' },
+  { icon: Database, label: 'Logs', path: '/admin/dashboard?tab=logs' },
+];
+
+export const Layout = ({ children, user, title }: { children: React.ReactNode, user: User | null, title?: string }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const profileRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  if (!user) return <>{children}</>;
+
+  const menuItems: MenuItem[] = user.role === 'doctor' ? DOCTOR_ITEMS : user.role === 'admin' ? ADMIN_ITEMS : STUDENT_ITEMS;
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  const studentMenuItems = [
-    { icon: Home, label: 'Home', path: '/student/dashboard' },
-    { icon: Calendar, label: 'Book Appointment', path: '/student/book' },
-    { icon: Calculator, label: 'Calculate CGPA', path: '/student/cgpa' },
-    { icon: UserIcon, label: 'Review Lecturers', path: '/student/lecturers-review' },
-    { icon: Utensils, label: 'Review Food Vendors', path: '/student/food-review' },
-    { icon: Settings, label: 'Settings', path: '/student/settings' },
-  ];
-
-  const adminMenuItems = [
-    { icon: LayoutDashboard, label: 'Overview Dashboard', path: '/admin/dashboard' },
-    { icon: Users, label: 'Students Management', path: '/admin/dashboard?tab=students' },
-    { icon: Calendar, label: 'Appointments', path: '/admin/dashboard?tab=appointments' },
-    { icon: FileText, label: 'Reviews', path: '/admin/dashboard?tab=reviews' },
-    { icon: Calculator, label: 'CGPA Records', path: '/admin/dashboard?tab=cgpa' },
-    { icon: Settings, label: 'System Settings', path: '/admin/dashboard?tab=settings' },
-    { icon: Activity, label: 'System Logs', path: '/admin/dashboard?tab=logs' },
-  ];
-
-  const doctorMenuItems = [
-    { icon: Home, label: 'Dashboard', path: '/doctor/dashboard' },
-    { icon: Calendar, label: 'Incoming Appointments', path: '/doctor/dashboard?tab=requests' },
-    { icon: ClipboardList, label: 'Medical Notes', path: '/doctor/dashboard?tab=notes', badge: 'Soon' },
-    { icon: Settings, label: 'Settings', path: '/doctor/dashboard?tab=settings' },
-  ];
-
-  let menuItems = studentMenuItems;
-  if (user?.role === 'admin') menuItems = adminMenuItems;
-  if (user?.role === 'doctor') menuItems = doctorMenuItems;
-
-  // Render Navbar for Logged Out State (Unified Login)
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#F3F4F6]">
-        <header className="bg-white sticky top-0 z-20 shadow-sm border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            {/* Logo Left */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-[#0057FF]">
-                 <GraduationCap size={24} />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="font-bold text-gray-900 text-sm leading-tight">WELLSPRING</h1>
-                <p className="text-[10px] text-gray-500 font-medium tracking-wider">UNIVERSITY</p>
-              </div>
-            </div>
-          </div>
-        </header>
-        {children}
-      </div>
-    );
-  }
-
-  const roleLabels = {
-    student: 'Student Portal',
-    doctor: 'Doctor Panel',
-    admin: 'Admin Console'
+  const handleNavigation = (item: any) => {
+    if (item.external) {
+      window.open(item.path, '_blank');
+    } else {
+      navigate(item.path);
+    }
+    setSidebarOpen(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6]">
-      {/* Top Bar (Authenticated) */}
-      <header className="bg-white sticky top-0 z-20 shadow-sm/50">
-        <div className="flex items-center justify-between px-4 h-16 max-w-7xl mx-auto w-full">
-          
-          {/* Left: Hamburger & Menu */}
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setIsMenuOpen(true)}
-              className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg active:scale-95 transition-transform"
-            >
-              <Menu size={24} />
-            </button>
-            <h1 className="font-bold text-lg text-gray-800 truncate flex items-center gap-2">
-              {user.role === 'admin' && <Shield size={18} className="text-blue-600"/>}
-              {title || roleLabels[user.role]}
-            </h1>
-          </div>
-          
-          {/* Right: Profile Dropdown */}
-          <div className="flex items-center gap-3" ref={profileRef}>
-             <button className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 hidden sm:block">
-               <Bell size={20} />
-             </button>
-             
-             <div className="relative">
-               <button 
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-2 hover:bg-gray-50 p-1 pr-2 rounded-full border border-transparent hover:border-gray-200 transition-all"
-               >
-                 <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100 relative">
-                   <img src={user.profilePicUrl} alt="Profile" className="w-full h-full object-cover" />
-                 </div>
-                 {user.role === 'doctor' && (
-                    <div className="absolute top-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                 )}
-                 <ChevronDown size={14} className="text-gray-400" />
-               </button>
+    <div className="min-h-screen bg-[#F3F4F6] flex">
+      {/* Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
 
-               {/* Profile Dropdown Menu */}
-               {isProfileOpen && (
-                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 py-2 animate-fade-in z-50">
-                   <div className="px-4 py-3 border-b border-gray-100 mb-2">
-                     <p className="font-bold text-gray-800 truncate">{user.fullName}</p>
-                     <p className="text-xs text-gray-500 truncate capitalize">{user.role}</p>
-                   </div>
-                   
-                   {user.role === 'student' && (
-                     <>
-                       <button onClick={() => { navigate('/student/settings'); setIsProfileOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-[#0057FF] flex items-center gap-2">
-                         <Settings size={16} /> Account Settings
-                       </button>
-                       <button onClick={() => { navigate('/student/history'); setIsProfileOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-[#0057FF] flex items-center gap-2">
-                         <Calendar size={16} /> Appointment History
-                       </button>
-                     </>
-                   )}
-
-                   {user.role === 'admin' && (
-                     <button onClick={() => { navigate('/admin/dashboard?tab=settings'); setIsProfileOpen(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-[#0057FF] flex items-center gap-2">
-                       <Settings size={16} /> System Settings
-                     </button>
-                   )}
-                   
-                   <div className="my-2 border-t border-gray-100" />
-                   <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
-                     <LogOut size={16} /> Logout
-                   </button>
-                 </div>
-               )}
-             </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="p-4 pb-20 max-w-4xl mx-auto">
-        {children}
-      </main>
-
-      {/* Sidebar Drawer */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 z-50 flex">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsMenuOpen(false)}
-          />
-          
-          {/* Menu Content */}
-          <div className="relative w-[280px] h-full bg-white shadow-2xl flex flex-col animate-slide-in-left">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-blue-50">
-              <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 rounded-full bg-[#0057FF] flex items-center justify-center text-white">
-                    <GraduationCap size={18} />
-                 </div>
-                 <div>
-                    <h2 className="text-sm font-bold text-gray-900">WELLSPRING</h2>
-                    <p className="text-[10px] text-gray-500">SMART APP PROJECT</p>
-                 </div>
-              </div>
-              <button 
-                onClick={() => setIsMenuOpen(false)}
-                className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
-              >
-                <X size={20} />
-              </button>
+      {/* Sidebar */}
+      <aside className={`fixed lg:sticky top-0 left-0 h-full w-[280px] bg-white border-r border-gray-200 z-50 transition-transform duration-300 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+         <div className="p-6 h-full flex flex-col">
+            <div className="flex items-center gap-3 mb-10 px-2">
+               <div className="w-10 h-10 bg-[#0057FF] rounded-xl flex items-center justify-center text-white">
+                  <GraduationCap size={20} />
+               </div>
+               <div>
+                  <h1 className="font-black text-gray-900 leading-none">WELLSPRING</h1>
+                  <p className="text-[10px] font-bold text-[#0057FF] tracking-widest mt-1">SMART APP</p>
+               </div>
             </div>
 
-            <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-              {menuItems.map((item) => {
-                const isActive = location.pathname + location.search === item.path;
-                return (
-                  <button
-                    key={item.label}
-                    onClick={() => {
-                      if (item.path.includes('?')) {
-                        navigate(item.path);
-                      } else {
-                        navigate(item.path);
-                      }
-                      setIsMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                      isActive 
-                        ? 'bg-blue-50 text-[#0057FF]' 
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <item.icon size={18} className={isActive ? 'text-[#0057FF]' : 'text-gray-400'} />
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {/* @ts-ignore */}
-                    {item.badge && (
-                      <span className="px-2 py-0.5 text-[10px] bg-blue-100 text-blue-700 rounded-full font-bold">
-                        {/* @ts-ignore */}
-                        {item.badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+            <nav className="flex-1 space-y-1 overflow-y-auto">
+               <div className="px-2 mb-2 text-xs font-bold text-gray-400 uppercase tracking-wider">Menu</div>
+               {menuItems.map((item) => {
+                 const isActive = !item.external && location.pathname === item.path.split('?')[0];
+                 return (
+                   <button
+                     key={item.label}
+                     onClick={() => handleNavigation(item)}
+                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                       isActive 
+                         ? 'bg-[#0057FF] text-white shadow-lg shadow-blue-500/30' 
+                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                     }`}
+                   >
+                     <item.icon size={18} />
+                     {item.label}
+                     {item.external && <ExternalLink size={14} className="ml-auto opacity-50" />}
+                   </button>
+                 );
+               })}
             </nav>
 
-            <div className="p-4 border-t border-gray-100 bg-gray-50">
-              <button 
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors border border-red-100 bg-white"
-              >
-                <LogOut size={18} />
-                Logout
-              </button>
+            <div className="pt-6 border-t border-gray-100 mt-4">
+               <div className="flex items-center gap-3 px-2 mb-4">
+                  <img src={user.profilePicUrl} alt="" className="w-10 h-10 rounded-full bg-gray-100 object-cover" />
+                  <div className="flex-1 min-w-0">
+                     <p className="text-sm font-bold text-gray-900 truncate">{user.fullName}</p>
+                     <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                  </div>
+               </div>
+               <button 
+                 onClick={handleLogout}
+                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+               >
+                 <LogOut size={18} />
+                 Logout
+               </button>
             </div>
-          </div>
-        </div>
-      )}
+         </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 min-w-0">
+         {/* Top Header */}
+         <header className="sticky top-0 z-30 bg-[#F3F4F6]/80 backdrop-blur-md px-4 sm:px-8 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+               <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-gray-600 hover:bg-white rounded-lg lg:hidden">
+                  <Menu size={24} />
+               </button>
+               <h2 className="text-xl font-bold text-gray-800 hidden sm:block">
+                  {title || (user.role === 'student' ? `Hi, ${user.fullName.split(' ')[0]} 👋` : 'Dashboard')}
+               </h2>
+            </div>
+            
+            <div className="flex items-center gap-4">
+               <div className="relative">
+                  <div className="w-2.5 h-2.5 bg-red-500 rounded-full absolute top-1.5 right-2 border-2 border-[#F3F4F6]"></div>
+                  <button className="p-2.5 bg-white text-gray-400 hover:text-[#0057FF] rounded-xl shadow-sm border border-gray-200 transition-colors">
+                     <Bell size={20} />
+                  </button>
+               </div>
+               {/* Profile Top Right Link */}
+               <button 
+                 onClick={() => navigate(user.role === 'student' ? '/student/settings' : '#')}
+                 className="hidden sm:flex items-center gap-2 pl-2 pr-4 py-1.5 bg-white rounded-full border border-gray-200 shadow-sm hover:border-blue-200 transition-colors"
+               >
+                 <img src={user.profilePicUrl} alt="" className="w-8 h-8 rounded-full bg-gray-100" />
+                 <span className="text-xs font-bold text-gray-700">Profile</span>
+               </button>
+            </div>
+         </header>
+
+         {/* Content Area */}
+         <div className="px-4 sm:px-8 pb-10 max-w-7xl mx-auto">
+            {children}
+            
+            {/* Footer */}
+            <footer className="mt-20 pt-8 border-t border-gray-200 text-center">
+              <p className="text-gray-400 text-xs font-medium">© 2025 Wellspring University — SmartApp System</p>
+            </footer>
+         </div>
+      </main>
     </div>
   );
 };
